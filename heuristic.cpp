@@ -8,7 +8,7 @@ void Heuristic::init(unsigned int size, unsigned int agents)
         h_values[i].resize(agents, -1);
 }
 
-void Heuristic::count(const Map &map, Agent agent)
+void Heuristic::count(const Map &map, Agent const& agent)
 {
     Node curNode(agent.goal_id, 0, 0, agent.goal_i, agent.goal_j), newNode;
     open.clear();

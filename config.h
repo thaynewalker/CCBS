@@ -16,6 +16,7 @@ public:
     double  focal_weight;
     bool    use_cardinal;
     bool    use_disjoint_splitting;
+    bool    max_biclique_overlap;
     int     hlh_type;
     int     connectdness;
     double  agent_size;

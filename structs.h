@@ -2,6 +2,7 @@
 #define STRUCTS_H
 #include <math.h>
 #include <vector>
+#include <array>
 #include <list>
 #include <iostream>
 #include <chrono>
@@ -43,6 +44,7 @@ struct Node
     Node*   parent;
     std::pair<double, double> interval;
     int interval_id;
+    int hash(int size){return id+interval_id*size;}
     Node(int _id = -1, double _f = -1, double _g = -1, double _i = -1, double _j = -1, Node* _parent = nullptr, double begin = -1, double end = -1)
         :id(_id), f(_f), g(_g), i(_i), j(_j), parent(_parent), interval(std::make_pair(begin, end)) {interval_id = 0;}
     bool operator <(const Node& other) const //required for heuristic calculation
@@ -51,12 +53,32 @@ struct Node
     }
 };
 
+struct NodePair
+{
+    std::array<Node,2> nodes;
+    double f, g;
+    NodePair const* parent;
+    uint64_t id;
+    uint64_t hash(int size){return id = nodes[0].hash(size) + 0xffffffff*nodes[1].hash(size);}
+    NodePair(Node const& n1, Node const& n2, NodePair const* _parent = nullptr):nodes({n1,n2}),f(n1.f+n2.f),g(n1.g+n2.g),parent(_parent),id(0){}
+};
+
 struct Position
 {
     double  i, j, t;
     Position(double _i = -1, double _j = -1, double _t = -1)
         :i(_i), j(_j), t(_t) {}
     Position(const Node& node): i(node.i), j(node.j), t(node.g) {}
+};
+
+struct PathPair
+{
+    std::vector<std::array<Node,2>> nodes;
+    double cost;
+    std::array<int,2> agentID;
+    int expanded;
+    PathPair(std::vector<std::array<Node,2>> _nodes = std::vector<std::array<Node,2>>(0), double _cost = -1, int _agent1ID = -1, int _agent2ID=-1)
+        : nodes(_nodes), cost(_cost), agentID({_agent1ID,_agent2ID}) {expanded = 0;}
 };
 
 struct Path
@@ -170,7 +192,7 @@ struct CBS_Node
 {
     std::vector<sPath> paths;
     CBS_Node* parent;
-    Constraint constraint;
+    std::list<Constraint> constraints;
     Constraint positive_constraint;
     int id;
     std::string id_str;
@@ -182,8 +204,8 @@ struct CBS_Node
     std::list<Conflict> conflicts;
     std::list<Conflict> semicard_conflicts;
     std::list<Conflict> cardinal_conflicts;
-    CBS_Node(std::vector<sPath> _paths = {}, CBS_Node* _parent = nullptr, Constraint _constraint = Constraint(), double _cost = 0, int _conflicts_num = 0, int total_cons_ = 0)
-        :paths(_paths), parent(_parent), constraint(_constraint), cost(_cost), conflicts_num(_conflicts_num), total_cons(total_cons_)
+    CBS_Node(std::vector<sPath> _paths = {}, CBS_Node* _parent = nullptr, std::list<Constraint> _constraints = std::list<Constraint>(), double _cost = 0, int _conflicts_num = 0, int total_cons_ = 0)
+        :paths(_paths), parent(_parent), constraints(_constraints), cost(_cost), conflicts_num(_conflicts_num), total_cons(total_cons_)
     {
         low_level_expanded = 0;
         h = 0;
@@ -427,6 +449,16 @@ public:
             return 6;//DESTINATION;
         return 7;//BETWEEN;
     }
+};
+
+struct IntervalInfo {
+    IntervalInfo(int m, double t1, double t2, double tb1, double tb2):move_id(m),fore_t1(t1),fore_t2(t2),back_t1(tb1),back_t2(tb2){}
+    IntervalInfo():move_id(-1),fore_t1(0),fore_t2(0),back_t1(0),back_t2(0){}
+    int move_id;
+    double fore_t1;
+    double fore_t2;
+    double back_t1;
+    double back_t2;
 };
 
 #endif // STRUCTS_H
