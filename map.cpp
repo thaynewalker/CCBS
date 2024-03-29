@@ -321,7 +321,7 @@ bool Map::cell_is_obstacle(int i, int j) const
     return (grid[i][j] == CN_OBSTL);
 }
 
-std::vector<Node> Map::get_valid_moves(int id) const
+std::vector<Node> const& Map::get_valid_moves(int id) const
 {
     return valid_moves[id];
 }
